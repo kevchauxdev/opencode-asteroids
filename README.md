@@ -29,6 +29,7 @@ Luego visita `http://localhost:3000`.
 | `←` `→`   | Rotar nave |
 | `↑`       | Propulsar  |
 | `Espacio` | Disparar   |
+| `C`       | Cambiar skin de la nave |
 
 ## Puntuación
 
@@ -47,4 +48,5 @@ Luego visita `http://localhost:3000`.
 - Partículas de explosión al destruir asteroides
 - **Power-ups**: cada asteroide destruido tiene un 15% de probabilidad de soltar uno; Velocidad (doble propulsión), Escudo (bloquea proyectiles enemigos) y Triple disparo (tres balas paralelas) aparecen con la misma probabilidad. Los efectos duran 5 s y los objetos desaparecen a los 10 s si no se recogen
 - **Naves enemigas**: aparecen periódicamente, disparan a la nave y otorgan 150 puntos al destruirlas
+- 4 skins de nave seleccionables con `C`; la selección se guarda en el navegador
 - **Estrella fugaz**: asteroide especial amarillo con estela, mucho más rápido que los normales; siempre aparece en una posición aleatoria al iniciar la partida y, además, tiene un 15% de probabilidad de aparecer al spawnear cada nivel. No se parte en fragmentos, otorga 200 puntos y desaparece a los 5 s si no se destruye (no cuenta para completar el nivel).
