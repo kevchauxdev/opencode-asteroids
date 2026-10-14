@@ -379,6 +379,10 @@ class EnemyShip {
 // ── Ship ──────────────────────────────────────────────────────────────────────
 const SHIP_SKINS = [
   {
+    id: 'purple', name: 'Morada', hullColor: '#800080',
+    flameColor: '#8000ff', boostedFlameColor: '#e080ff',
+  },
+  {
     id: 'classic', name: 'Clásica', hullColor: '#fff',
     flameColor: '#ff8200', boostedFlameColor: '#ffd23f',
   },
@@ -427,7 +431,7 @@ class Ship {
     this.angle  = -Math.PI / 2;
     this.vx     = 0;
     this.vy     = 0;
-    this.radius = 12;
+    this.radius = selectedSkinIndex === 0 ? 12 : 24;
     this.thrusting     = false;
     this.invincible    = 3;
     this.shootCooldown = 0;
@@ -716,7 +720,7 @@ function update(dt) {
       if (!a.dead && !b.dead && dist(b, a) < a.radius) {
         b.dead = true;
         a.dead = true;
-        score += a.isStar ? STAR_POINTS : POINTS[a.size];
+        score += (a.isStar ? STAR_POINTS : POINTS[a.size]) * (selectedSkinIndex === 0 ? 1 : 2);
         explode(a.x, a.y, a.size * 5);
         newAsteroids.push(...a.split());
         if (Math.random() < POWER_DROP_CHANCE) {
