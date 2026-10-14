@@ -216,13 +216,16 @@ class ShootingStar extends Asteroid {
 // ── PowerUp ───────────────────────────────────────────────────────────────────
 const SPEED_DURATION    = 5;     // segundos de efecto
 const SPEED_MULT        = 2;     // doble propulsión
+const TRIPLE_SHOT_DURATION = 5;  // segundos de triple disparo
 const POWER_DROP_CHANCE = 0.15;  // probabilidad de drop por asteroide destruido
 const POWER_LIFE        = 10;    // segundos que el power-up queda en pantalla
+const TRIPLE_SHOT_COLOR = '#55e6ff';
 
 class PowerUp {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.type = Math.random() < 0.5 ? 'speed' : 'tripleShot';
     this.radius = 10;
     this.ttl = POWER_LIFE;
     this.dead = false;
@@ -246,24 +249,33 @@ class PowerUp {
 
     ctx.save();
     ctx.translate(this.x, this.y);
-    ctx.strokeStyle = '#ffd23f';
+    const color = this.type === 'speed' ? '#ffd23f' : TRIPLE_SHOT_COLOR;
+    ctx.strokeStyle = color;
     ctx.lineWidth   = 1.8;
     ctx.lineJoin    = 'round';
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Ícono de rayo
-    ctx.beginPath();
-    ctx.moveTo( 2, -5);
-    ctx.lineTo(-3,  1);
-    ctx.lineTo( 0,  1);
-    ctx.lineTo(-2,  5);
-    ctx.lineTo( 3, -1);
-    ctx.lineTo( 0, -1);
-    ctx.closePath();
-    ctx.fillStyle = '#ffd23f';
-    ctx.fill();
+    if (this.type === 'speed') {
+      ctx.beginPath();
+      ctx.moveTo( 2, -5);
+      ctx.lineTo(-3,  1);
+      ctx.lineTo( 0,  1);
+      ctx.lineTo(-2,  5);
+      ctx.lineTo( 3, -1);
+      ctx.lineTo( 0, -1);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    } else {
+      ctx.fillStyle = color;
+      for (const y of [-4, 0, 4]) {
+        ctx.beginPath();
+        ctx.arc(0, y, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     ctx.restore();
   }
 }
@@ -283,6 +295,7 @@ class Ship {
     this.invincible    = 3;
     this.shootCooldown = 0;
     this.speedTimer    = 0;
+    this.tripleShotTimer = 0;
     this.dead          = false;
   }
 
@@ -290,11 +303,16 @@ class Ship {
     this.speedTimer = SPEED_DURATION;
   }
 
+  applyTripleShot() {
+    this.tripleShotTimer = TRIPLE_SHOT_DURATION;
+  }
+
   update(dt) {
     if (this.dead) return;
     if (this.invincible    > 0) this.invincible    -= dt;
     if (this.shootCooldown > 0) this.shootCooldown -= dt;
     if (this.speedTimer    > 0) this.speedTimer    -= dt;
+    if (this.tripleShotTimer > 0) this.tripleShotTimer -= dt;
 
     const ROT   = 3.5;   // rad/s
     const THRUST = 260 * (this.speedTimer > 0 ? SPEED_MULT : 1);  // px/s²
@@ -321,6 +339,14 @@ class Ship {
     const NOSE = 21;
     const ox = this.x + Math.cos(this.angle) * NOSE;
     const oy = this.y + Math.sin(this.angle) * NOSE;
+    if (this.tripleShotTimer > 0) {
+      const SPACING = 7;
+      const sideX = -Math.sin(this.angle);
+      const sideY = Math.cos(this.angle);
+      return [-SPACING, 0, SPACING].map(offset =>
+        new Bullet(ox + sideX * offset, oy + sideY * offset, this.angle)
+      );
+    }
     return [new Bullet(ox, oy, this.angle)];
   }
 
@@ -518,7 +544,8 @@ function update(dt) {
   for (const p of powerUps) {
     if (dist(ship, p) < ship.radius + p.radius) {
       p.dead = true;
-      ship.applySpeed();
+      if (p.type === 'speed') ship.applySpeed();
+      else ship.applyTripleShot();
       explode(p.x, p.y, 5);
     }
   }
@@ -569,11 +596,19 @@ function drawHUD() {
   for (let i = 0; i < lives; i++)
     drawLifeIcon(W - 16 - i * 22, 18);
 
-  // Indicador del power-up Velocidad
-  if (ship.speedTimer > 0 && !ship.dead) {
+  // Indicadores de power-ups activos
+  if (!ship.dead) {
+    const activePowers = [];
+    if (ship.speedTimer > 0)
+      activePowers.push({ label: 'VELOCIDAD', timer: ship.speedTimer, color: '#ffd23f' });
+    if (ship.tripleShotTimer > 0)
+      activePowers.push({ label: 'TRIPLE DISPARO', timer: ship.tripleShotTimer, color: TRIPLE_SHOT_COLOR });
+
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#ffd23f';
-    ctx.fillText(`VELOCIDAD  ${ship.speedTimer.toFixed(1)}s`, W / 2, 46);
+    activePowers.forEach((power, index) => {
+      ctx.fillStyle = power.color;
+      ctx.fillText(`${power.label}  ${power.timer.toFixed(1)}s`, W / 2, 46 + index * 20);
+    });
   }
 }
 

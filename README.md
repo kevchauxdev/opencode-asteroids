@@ -44,5 +44,5 @@ Luego visita `http://localhost:3000`.
 - 3 vidas con invencibilidad temporal al reaparecer (parpadeo)
 - Asteroides se parten en fragmentos más pequeños al ser destruidos
 - Partículas de explosión al destruir asteroides
-- Power-up **Velocidad**: doble propulsión durante 5 segundos; aparece con un 15% de probabilidad al destruir un asteroide y desaparece a los 10 s si no se recoge
+- Power-ups: cada asteroide destruido tiene un 15% de probabilidad de soltar **Velocidad** (doble propulsión) o **Triple disparo** (tres balas paralelas por disparo); el efecto dura 5 segundos y el objeto desaparece a los 10 s si no se recoge
 - **Estrella fugaz**: asteroide especial amarillo con estela, mucho más rápido que los normales; siempre aparece en una posición aleatoria al iniciar la partida y, además, tiene un 15% de probabilidad de aparecer al spawnear cada nivel. No se parte en fragmentos, otorga 200 puntos y desaparece a los 5 s si no se destruye (no cuenta para completar el nivel).
