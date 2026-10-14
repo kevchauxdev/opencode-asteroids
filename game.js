@@ -269,6 +269,47 @@ class PowerUp {
 }
 
 // ── Ship ──────────────────────────────────────────────────────────────────────
+const SHIP_SKINS = [
+  {
+    id: 'classic', name: 'Clásica', hullColor: '#fff',
+    flameColor: '#ff8200', boostedFlameColor: '#ffd23f',
+  },
+  {
+    id: 'cyan', name: 'Cian', hullColor: '#55eaff',
+    flameColor: '#36cfff', boostedFlameColor: '#a5f3ff',
+  },
+  {
+    id: 'crimson', name: 'Carmesí', hullColor: '#ff5d73',
+    flameColor: '#ff3156', boostedFlameColor: '#ffb4c0',
+  },
+  {
+    id: 'gold', name: 'Dorada', hullColor: '#ffd23f',
+    flameColor: '#ff9f1c', boostedFlameColor: '#fff0a6',
+  },
+];
+const SHIP_SKIN_STORAGE_KEY = 'asteroids-ship-skin';
+
+function loadShipSkinIndex() {
+  try {
+    const savedId = localStorage.getItem(SHIP_SKIN_STORAGE_KEY);
+    const savedIndex = SHIP_SKINS.findIndex(skin => skin.id === savedId);
+    return savedIndex >= 0 ? savedIndex : 0;
+  } catch {
+    return 0;
+  }
+}
+
+let selectedSkinIndex = loadShipSkinIndex();
+
+function cycleShipSkin() {
+  selectedSkinIndex = (selectedSkinIndex + 1) % SHIP_SKINS.length;
+  try {
+    localStorage.setItem(SHIP_SKIN_STORAGE_KEY, SHIP_SKINS[selectedSkinIndex].id);
+  } catch {
+    // La selección sigue activa durante esta partida aunque el almacenamiento no esté disponible.
+  }
+}
+
 class Ship {
   constructor() { this.reset(); }
 
@@ -332,7 +373,8 @@ class Ship {
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = '#fff';
+    const skin = SHIP_SKINS[selectedSkinIndex];
+    ctx.strokeStyle = skin.hullColor;
     ctx.lineWidth   = 1.5;
     ctx.lineJoin    = 'round';
 
@@ -352,8 +394,7 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, boosted ? 24 : 14), 0);
       ctx.lineTo(-8,  4);
-      ctx.strokeStyle = boosted ? 'rgba(255, 210, 63, 0.95)'
-                                : 'rgba(255, 130, 0, 0.85)';
+      ctx.strokeStyle = boosted ? skin.boostedFlameColor : skin.flameColor;
       ctx.stroke();
     }
 
@@ -462,6 +503,8 @@ function killShip() {
 
 // ── Update ────────────────────────────────────────────────────────────────────
 function update(dt) {
+  if (pressed('KeyC')) cycleShipSkin();
+
   if (state === 'gameover') {
     if (pressed('Space')) initGame();
     particles.forEach(p => p.update(dt));
@@ -565,6 +608,10 @@ function drawHUD() {
 
   ctx.textAlign = 'center';
   ctx.fillText(`NIVEL ${level}`, W / 2, 26);
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = SHIP_SKINS[selectedSkinIndex].hullColor;
+  ctx.fillText(`NAVE ${SHIP_SKINS[selectedSkinIndex].name} · C`, 14, 46);
 
   for (let i = 0; i < lives; i++)
     drawLifeIcon(W - 16 - i * 22, 18);
