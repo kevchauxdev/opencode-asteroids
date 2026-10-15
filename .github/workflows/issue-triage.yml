@@ -1,0 +1,77 @@
+name: Issue triage
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add triage label and review checklist
+        uses: actions/github-script@v9
+        with:
+          script: |
+            if (context.payload.issue.pull_request) return;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const label = 'needs-triage';
+
+            const labels = await github.paginate(
+              github.rest.issues.listLabelsForRepo,
+              { owner, repo, per_page: 100 },
+            );
+
+            const existingLabel = labels.find(
+              ({ name }) => name.toLowerCase() === label,
+            );
+
+            if (!existingLabel) {
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: label,
+                color: 'FBCA04',
+                description: 'Issue pendiente de revisión inicial',
+              });
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number,
+              labels: [existingLabel?.name ?? label],
+            });
+
+            const { data: issue } = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const marker = '<!-- issue-triage-context -->';
+            const body = issue.body ?? '';
+
+            if (!body.includes(marker)) {
+              const separator = body.length > 0 ? '\n\n---\n\n' : '---\n\n';
+              const checklist = [
+                '## Información para facilitar la revisión',
+                '',
+                '- [ ] Pasos para reproducir (si aplica)',
+                '- [ ] Resultado esperado y resultado actual (si aplica)',
+                '- [ ] Navegador y sistema operativo (si aplica)',
+                '',
+                marker,
+              ].join('\n');
+
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number,
+                body: `${body}${separator}${checklist}`,
+              });
+            }
